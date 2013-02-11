@@ -16,7 +16,7 @@
     - fix permissions and ownerships
     - restart supervised processes
 - name: reload supervisor conf
-  shell: supervisorctl reload
+  shell: supervisorctl reload && sleep 10 # supervisor sucks
   notify: restart supervised processes
 - name: restart supervised processes
   shell: supervisorctl restart $item
