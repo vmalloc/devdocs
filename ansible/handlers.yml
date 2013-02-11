@@ -1,0 +1,27 @@
+- name: restart nginx
+  action: service name=nginx state=restarted
+- name: fix permissions and ownerships
+  shell: chown -R $user_name:$group_name $item
+  with_items:
+    - $deploy_root
+- name: untar sources
+  shell: cd $deploy_root && rm -rf webapp && tar xf $webapp_archive_location 2>&1 > /tmp/untar.log
+  notify: 
+    - fix permissions and ownerships
+    - update virtualenv requirements
+    - restart supervised processes
+- name: update virtualenv requirements
+  action: pip requirements=$deploy_root/webapp/pip_requirements.txt virtualenv=$deploy_root/virtualenv
+  notify:
+    - fix permissions and ownerships
+    - restart supervised processes
+- name: reload supervisor conf
+  shell: supervisorctl reload
+  notify: restart supervised processes
+- name: restart supervised processes
+  shell: supervisorctl restart $item
+  with_items:
+    - $app_name-wsgi
+    - $app_name-rq
+
+      

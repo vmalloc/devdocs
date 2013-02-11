@@ -1,0 +1,32 @@
+- hosts: webservers
+  sudo: yes
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: setup group
+      action: group name=$group_name state=present
+    - name: setup user
+      action: user name=$user_name state=present group=$group_name
+    - name: update apt
+      action: apt update_cache=yes
+    - name: set up packages
+      action: apt pkg=$item state=latest
+      with_items:
+        - git
+        - nginx
+        - redis-server
+        - supervisor
+        - python-virtualenv
+        - python-dev
+        - libxslt1-dev # required for lxml
+    - name: ensure deploy root
+      action: file state=directory path=$deploy_root owner=$user_name group=$group_name
+      notify: fix permissions and ownerships
+    - name: nginx configuration
+      action: template src=templates/nginx-site.j2 dest=/etc/nginx/sites-enabled/$app_name.conf
+      notify: restart nginx
+    - name: ensure no nginx default conf
+      action: file path=/etc/nginx/sites-enabled/default state=absent
+      notify: restart nginx
+  handlers:
+    - include: handlers.yml

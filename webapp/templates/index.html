@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<header>
+  <div class="well">
+      <h1><img src="/static/img/logo.png" style="height: 2em">devdocs</h1>
+  </div>
+  <div class="container">
+    <table class="table">
+      <tr>
+        <th>Project</th>
+        <th>Version</th>
+        <th><img src="/static/img/sphinx-logo.png" class="th-image">Online Docs</th>
+        <th><img src="/static/img/dash-logo.png" class="th-image">Dash Repository</th>
+      </tr>
+    {% for project in projects %}
+      <tr>
+          <td><a href="sphinx/{{project.package_name}}">{{project.package_name}}</a></td>
+          <td><small>{{project.version}}</small></td>
+          <td><a href="sphinx/{{project.package_name}}"><button class="btn">View Online</button></a></td>
+          <td>
+            <div class="input-prepend">
+              <span class="add-on">URL</span>
+              <input class="span2" id="prependedInput" type="text" value="{{request.url_root}}dash/{{project.package_name}}/dash.xml" readonly>
+            </div>
+          </td>
+      </tr>
+    {% endfor %}
+    </table>
+  </div>
+</header>
+{% endblock %}

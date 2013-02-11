@@ -1,0 +1,22 @@
+---
+# TODO: 
+#   user/group
+- include: local.yml
+- include: base_system.yml
+- hosts: webservers
+  vars_files:
+    - vars.yml
+  sudo: yes
+  tasks:
+    - name: ensure RQ installed
+      action: pip name=rq virtualenv=$deploy_root/virtualenv
+    - name: ensure uwsgi is installed
+      shell: $deploy_root/virtualenv/bin/easy_install -U uwsgi creates=$deploy_root/virtualenv/bin/uwsgi
+    - name: copy source
+      copy: src=../__webapp.tar dest=$webapp_archive_location
+      notify: untar sources
+    - name: configure supervisor
+      action: template src=templates/supervisor.j2 dest=/etc/supervisor/conf.d/$app_name-wsgi.conf
+      notify: reload supervisor conf
+  handlers:
+    - include: handlers.yml
