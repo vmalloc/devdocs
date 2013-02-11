@@ -17,6 +17,6 @@
       notify: untar sources
     - name: configure supervisor
       action: template src=templates/supervisor.j2 dest=/etc/supervisor/conf.d/$app_name-wsgi.conf
-      notify: reload supervisor conf
+      notify: reload supervisor
   handlers:
     - include: handlers.yml

@@ -33,11 +33,11 @@ def index():
 def build():
     async_queue.enqueue_call(
         build_docs,
-        args=(request.values["url"], app.config["DOCS_ROOT"]),
+        args=(request.values["url"], app.config["DOCS_ROOT"], request.values.get("pypi_url", None)),
         timeout=app.config["JOB_TIMEOUT"])
     return "Queued"
 
-@app.route("/dash/<package_name>/dash.xml")
+@app.route("/dash/<package_name>.xml")
 def generate_docset_xml(package_name):
     version_filename = os.path.join(app.config["DOCS_ROOT"], package_name, "metadata", "version")
     if not os.path.isfile(version_filename):
@@ -45,7 +45,7 @@ def generate_docset_xml(package_name):
     with open(version_filename) as version_file:
         version = version_file.read().strip()
     docset_url = URLObject(request.base_url).\
-                 with_path(url_for("get_docset", package_name=package_name, filename="docset.tgz"))
+                 with_path(url_for("get_docset", package_name=package_name, filename=package_name + ".tgz"))
     return """<entry>
 <version>{version}</version>
 <url>{url}</url>

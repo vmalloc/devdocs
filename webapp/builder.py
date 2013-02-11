@@ -14,10 +14,10 @@ _logger = logging.getLogger(__name__)
 #_VIRTUALENV_PATH = os.path.join(tempfile.mkdtemp(), "env")
 _VIRTUALENV_PATH = os.path.join("/tmp/", "env")
 
-def build_docs(repo, dest):
+def build_docs(repo, dest, pypi=None):
     temp_dest = tempfile.mkdtemp()
     with _ensuring_virtualenv() as env:
-        with _temporary_checkout(repo, env) as temp_checkout:
+        with _temporary_checkout(repo, env, pypi) as temp_checkout:
             temp_checkout.write_metadata(temp_dest)
             temp_checkout.generate_sphinx(os.path.join(temp_dest, "sphinx"))
             temp_checkout.generate_dash(os.path.join(temp_dest, "dash"))
@@ -25,10 +25,10 @@ def build_docs(repo, dest):
             _move_to_dest(temp_dest, os.path.join(dest, temp_checkout.get_package_name()))
         return 0
 
-def _temporary_checkout(repo, env):
+def _temporary_checkout(repo, env, pypi):
     directory = os.path.join(tempfile.mkdtemp(), "src")
     _execute_assert_success("git clone {} {}".format(repo, directory))
-    return Checkout(directory, env)
+    return Checkout(directory, env, pypi)
 
 @contextmanager
 def _ensuring_virtualenv():
@@ -45,12 +45,13 @@ def _ensuring_virtualenv():
     yield _VIRTUALENV_PATH
 
 class Checkout(object):
-    def __init__(self, path, venv):
+    def __init__(self, path, venv, pypi):
         super(Checkout, self).__init__()
         self._path = path
         self._venv = venv
         self._package_name = self._version = self._description = None
         self._fetch_metadata()
+        self._install(pypi)
 
     def get_package_name(self):
         return self._package_name
@@ -70,6 +71,12 @@ class Checkout(object):
             cwd=self._path, stdout=subprocess.PIPE).stdout.read().strip()
         logging.info("Processing %s (version %s)", self._package_name, self._version)
 
+    def _install(self, pypi):
+        command = "python setup.py develop"
+        if pypi:
+            command += " -i {0}".format(pypi)
+        _execute_in_venv(self._venv, command, cwd=self._path)
+
     def __enter__(self):
         return self
 
@@ -83,14 +90,14 @@ class Checkout(object):
         temp_sphinx_dir = os.path.join(tempfile.mkdtemp(), "sphinx")
         with self._patched_repository_context():
             self.generate_sphinx(temp_sphinx_dir)
-            _execute_in_venv(self._venv, "doc2dash {temp_sphinx_dir}/html -i {icon} -n {self._package_name} --destination {dest}/dash.docset".format(
+            _execute_in_venv(self._venv, "doc2dash {temp_sphinx_dir}/html -i {icon} -n {self._package_name} --destination {dest}/".format(
                     icon=_get_icon_path(),
                     self=self,
                     temp_sphinx_dir=temp_sphinx_dir,
                     dest=dest_dir,
                     ))
-        _execute_assert_success("tar -czvf dash.tgz dash.docset", cwd=dest_dir)
-        shutil.rmtree(os.path.join(dest_dir, "dash.docset"))
+        _execute_assert_success("tar -czvf {0}.tgz {0}.docset".format(self._package_name), cwd=dest_dir)
+        shutil.rmtree(os.path.join(dest_dir, "{0}.docset".format(self._package_name)))
 
     @contextmanager
     def _patched_repository_context(self):
@@ -104,7 +111,7 @@ class Checkout(object):
         config_filename = os.path.join(self._path, "doc", "conf.py")
         with open(config_filename) as f:
             config = f.read()
-        config_dict = {}
+        config_dict = {"__file__" : config_filename}
         exec(config, config_dict)
         html_options = config_dict.get("html_theme_options", {})
         html_options["nosidebar"] = True
@@ -140,7 +147,7 @@ def _execute_assert_success(cmd, *args, **kwargs):
     return p
 
 def _execute_in_venv(venv, cmd, *args, **kwargs):
-    _execute_assert_success("source {}/bin/activate && {}".format(venv, cmd), *args, **kwargs)
+    _execute_assert_success("bash -c 'source {}/bin/activate && {}'".format(venv, cmd), *args, **kwargs)
 
 class ExecutionError(Exception):
     pass
