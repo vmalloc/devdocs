@@ -84,7 +84,11 @@ class Checkout(object):
         pass
 
     def generate_sphinx(self, dest_dir):
-        _execute_in_venv(self._venv, "python setup.py build_sphinx -E -a --build-dir {}".format(dest_dir), cwd=self._path)
+        _execute_in_venv(
+            self._venv,
+            "python setup.py build_sphinx --version {version} --release {version} -E -a --build-dir {dest}".format(dest=dest_dir, version=self._version),
+            cwd=self._path
+        )
 
     def generate_dash(self, dest_dir):
         temp_sphinx_dir = os.path.join(tempfile.mkdtemp(), "sphinx")
