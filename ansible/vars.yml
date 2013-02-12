@@ -1,4 +1,5 @@
 app_name: devdocs
+docs_root : /opt/$app_name/docs
 user_name: $app_name
 group_name: $app_name
 deploy_root: /opt/$app_name

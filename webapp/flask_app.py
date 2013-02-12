@@ -18,7 +18,7 @@ redis_conn = Redis()
 async_queue = Queue(connection=redis_conn)
 
 app = Flask(__name__)
-app.config["DOCS_ROOT"] = "/tmp/docs"
+app.config["DOCS_ROOT"] = "/opt/devdocs/docs"
 app.config["DEBUG"] = True
 app.config["JOB_TIMEOUT"] = 60 * 60
 
