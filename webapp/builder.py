@@ -145,9 +145,10 @@ def _move_to_dest(src, dest):
 
 def _execute_assert_success(cmd, *args, **kwargs):
     _logger.debug("exec: %s", cmd)
-    p = subprocess.Popen(cmd, shell=True, *args, **kwargs)
+    p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE,
+                         *args, **kwargs)
     if 0 != p.wait():
-        raise ExecutionError("Command failed: {!r}".format(cmd))
+        raise ExecutionError("Command failed: cmd: {!r} stderr:\n{}".format(cmd, p.stderr.read()))
     return p
 
 def _execute_in_venv(venv, cmd, *args, **kwargs):
