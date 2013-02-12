@@ -15,6 +15,9 @@
     - $deploy_root
 - name: reload supervisor
   shell: supervisorctl reload
+  notify: ensure supervisor service
+- name: ensure supervisor service
+  action: service name=supervisor state=started
 - name: restart nginx
   action: service name=nginx state=restarted
 
