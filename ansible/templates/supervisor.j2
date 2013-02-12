@@ -1,6 +1,5 @@
 [program:{{app_name}}-wsgi]
 command={{deploy_root}}/virtualenv/bin/uwsgi --uid $user_name --pythonpath={{deploy_root}}/webapp -b 16384 --chmod-socket 666 --home {{deploy_root}}/virtualenv --file {{deploy_root}}/webapp/flask_app.py --callable app -s {{unix_socket_name}}
-
 stdout_logfile=/var/log/{{app_name}}-wsgi.stdout    
 stdout_logfile_maxbytes=50MB
 stdout_logfile_backups=3
@@ -12,6 +11,7 @@ stderr_events_enabled=true
 
 [program:{{app_name}}-rq]
 command={{deploy_root}}/virtualenv/bin/rqworker
+environment=HOME='/home/$user_name',USER='$user_name'
 directory={{deploy_root}}/webapp
 stdout_logfile=/var/log/{{app_name}}-rq.stdout    
 stdout_logfile_maxbytes=50MB
