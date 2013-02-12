@@ -6,7 +6,6 @@
 - hosts: webservers
   vars_files:
     - vars.yml
-  sudo: yes
   tasks:
     - name: ensure RQ installed
       action: pip name=rq virtualenv=$deploy_root/virtualenv
