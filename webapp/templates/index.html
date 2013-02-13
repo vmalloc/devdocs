@@ -19,10 +19,7 @@
           <td><small>{{project.version}}</small></td>
           <td><a href="sphinx/{{project.package_name}}"><button class="btn">View Online</button></a></td>
           <td>
-            <div class="input-prepend">
-              <span class="add-on">URL</span>
-              <input class="span2" id="prependedInput" type="text" value="{{request.url_root}}dash/{{project.package_name}}/dash.xml" readonly>
-            </div>
+            <span style="background: silver">{{request.url_root}}dash/{{project.package_name}}.xml</span>
           </td>
       </tr>
     {% endfor %}
