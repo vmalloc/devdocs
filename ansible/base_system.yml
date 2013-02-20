@@ -14,6 +14,7 @@
         - redis-server
         - supervisor
         - python-virtualenv
+        - python-lxml
         - python-dev
         - libxslt1-dev # required for lxml
     - name: ensure directories
