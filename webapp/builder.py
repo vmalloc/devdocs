@@ -7,23 +7,29 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
+from raven import Client
+
+sentry = Client(None) # fill your sentry DSN here
 
 _logger = logging.getLogger(__name__)
 #_VIRTUALENV_PATH = os.path.join(tempfile.mkdtemp(), "env")
 _VIRTUALENV_PATH = os.path.join("/tmp/", "env")
 
 def build_docs(repo, dest, pypi=None):
-    temp_dest = tempfile.mkdtemp()
-    with _ensuring_virtualenv() as env:
-        with _temporary_checkout(repo, env, pypi) as temp_checkout:
-            temp_checkout.write_metadata(temp_dest)
-            temp_checkout.generate_sphinx(os.path.join(temp_dest, "sphinx"))
-            temp_checkout.generate_dash(os.path.join(temp_dest, "dash"))
-            temp_checkout.write_metadata(temp_dest)
-            _move_to_dest(temp_dest, os.path.join(dest, temp_checkout.get_package_name()))
-        return 0
+    try:
+        temp_dest = tempfile.mkdtemp()
+        with _ensuring_virtualenv() as env:
+            with _temporary_checkout(repo, env, pypi) as temp_checkout:
+                temp_checkout.write_metadata(temp_dest)
+                temp_checkout.generate_sphinx(os.path.join(temp_dest, "sphinx"))
+                temp_checkout.generate_dash(os.path.join(temp_dest, "dash"))
+                temp_checkout.write_metadata(temp_dest)
+                _move_to_dest(temp_dest, os.path.join(dest, temp_checkout.get_package_name()))
+            return 0
+    except:
+        sentry.captureException()
+        raise
 
 def _temporary_checkout(repo, env, pypi):
     directory = os.path.join(tempfile.mkdtemp(), "src")
