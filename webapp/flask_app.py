@@ -8,10 +8,11 @@ from flask import (
     url_for,
     )
 import os
-from rq import Connection, Queue
 from redis import Redis
 from urlobject import URLObject
 from builder import build_docs
+from raven.contrib.flask import Sentry
+from .sentry import SENTRY_DSN
 
 # Tell RQ what Redis connection to use
 redis_conn = Redis()
@@ -21,6 +22,8 @@ app = Flask(__name__)
 app.config["DOCS_ROOT"] = "/opt/devdocs/docs"
 app.config["DEBUG"] = True
 app.config["JOB_TIMEOUT"] = 60 * 60
+
+sentry = Sentry(app, dsn=SENTRY_DSN)
 
 if not os.path.exists(app.config["DOCS_ROOT"]):
     os.makedirs(app.config["DOCS_ROOT"])

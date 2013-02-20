@@ -1,3 +1,4 @@
+blinker
 flask==0.9
 raven
 redis

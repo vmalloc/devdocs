@@ -9,8 +9,9 @@ import shutil
 import subprocess
 import tempfile
 from raven import Client
+from .sentry import SENTRY_DSN
 
-sentry = Client(None) # fill your sentry DSN here
+sentry = Client(SENTRY_DSN)
 
 _logger = logging.getLogger(__name__)
 #_VIRTUALENV_PATH = os.path.join(tempfile.mkdtemp(), "env")
