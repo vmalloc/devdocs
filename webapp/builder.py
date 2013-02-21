@@ -9,17 +9,12 @@ import shutil
 import subprocess
 import tempfile
 from raven import Client
-from redis import Redis
-from rq import Queue
+from rq_queues import default_queue, retry_queue
 from sentry_dsn import SENTRY_DSN
 
 sentry = Client(SENTRY_DSN)
 
 _logger = logging.getLogger(__name__)
-
-redis_conn = Redis()
-default_queue = Queue(connection=redis_conn)
-retry_queue = Queue("retry", connection=redis_conn)
 
 def build_docs(repo, dest, pypi=None, retries_left=5):
     try:

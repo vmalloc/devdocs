@@ -8,21 +8,17 @@ from flask import (
     url_for,
     )
 import os
-from rq import Queue
-from redis import Redis
 from urlobject import URLObject
 from builder import build_docs
 from raven.contrib.flask import Sentry
 from sentry_dsn import SENTRY_DSN
+from rq_queues import default_queue
 
 # Tell RQ what Redis connection to use
-redis_conn = Redis()
-async_queue = Queue(connection=redis_conn)
 
 app = Flask(__name__)
 app.config["DOCS_ROOT"] = "/opt/devdocs/docs"
 app.config["DEBUG"] = True
-app.config["JOB_TIMEOUT"] = 60 * 60
 
 sentry = Sentry(app, dsn=SENTRY_DSN)
 
@@ -35,10 +31,9 @@ def index():
 
 @app.route("/build", methods=["POST"])
 def build():
-    async_queue.enqueue_call(
+    default_queue.enqueue_call(
         build_docs,
-        args=(request.values["url"], app.config["DOCS_ROOT"], request.values.get("pypi_url", None)),
-        timeout=app.config["JOB_TIMEOUT"])
+        args=(request.values["url"], app.config["DOCS_ROOT"], request.values.get("pypi_url", None)))
     return "Queued"
 
 @app.route("/dash/<package_name>.xml")
