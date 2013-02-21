@@ -39,17 +39,14 @@ def _temporary_checkout(repo, env, pypi):
 
 @contextmanager
 def _ensuring_virtualenv():
-    if os.path.isdir(_VIRTUALENV_PATH):
-        _execute_assert_success("git reset --hard && git clean -fdx", cwd=_VIRTUALENV_PATH)
-    else:
-        _execute_assert_success("virtualenv --distribute --no-site-packages {}".format(_VIRTUALENV_PATH))
+    virtualenv_path = "/tmp/virtualenvs/builder"
+    _execute_assert_success("virtualenv --distribute {}".format(virtualenv_path))
+    try:
         for package in ["doc2dash", "sphinx"]:
-            _execute_assert_success("{0}/bin/easy_install -U {1}".format(_VIRTUALENV_PATH, package))
-        _execute_assert_success("git init", cwd=_VIRTUALENV_PATH)
-        _execute_assert_success("git config user.name nobody", cwd=_VIRTUALENV_PATH)
-        _execute_assert_success("git config user.email nobody@nodomain.com", cwd=_VIRTUALENV_PATH)
-        _execute_assert_success("git add . && git commit -a -m clean", cwd=_VIRTUALENV_PATH)
-    yield _VIRTUALENV_PATH
+            _execute_assert_success("{0}/bin/easy_install -U {1}".format(virtualenv_path, package))
+        yield virtualenv_path
+    finally:
+        shutil.rmtree(virtualenv_path)
 
 class Checkout(object):
     def __init__(self, path, venv, pypi):
