@@ -8,11 +8,12 @@ from flask import (
     url_for,
     )
 import os
+from rq import Queue
 from redis import Redis
 from urlobject import URLObject
 from builder import build_docs
 from raven.contrib.flask import Sentry
-from .sentry import SENTRY_DSN
+from sentry_dsn import SENTRY_DSN
 
 # Tell RQ what Redis connection to use
 redis_conn = Redis()

@@ -9,15 +9,19 @@ import shutil
 import subprocess
 import tempfile
 from raven import Client
-from .sentry import SENTRY_DSN
+from redis import Redis
+from rq import Queue
+from sentry_dsn import SENTRY_DSN
 
 sentry = Client(SENTRY_DSN)
 
 _logger = logging.getLogger(__name__)
-#_VIRTUALENV_PATH = os.path.join(tempfile.mkdtemp(), "env")
-_VIRTUALENV_PATH = os.path.join("/tmp/", "env")
 
-def build_docs(repo, dest, pypi=None):
+redis_conn = Redis()
+default_queue = Queue(connection=redis_conn)
+retry_queue = Queue("retry", connection=redis_conn)
+
+def build_docs(repo, dest, pypi=None, retries_left=5):
     try:
         temp_dest = tempfile.mkdtemp()
         with _ensuring_virtualenv() as env:
@@ -29,8 +33,19 @@ def build_docs(repo, dest, pypi=None):
                 _move_to_dest(temp_dest, os.path.join(dest, temp_checkout.get_package_name()))
             return 0
     except:
-        sentry.captureException()
-        raise
+        retries_left -= 1
+        if retries_left <= 0:
+            sentry.captureException()
+        else:
+            retry_queue.enqueue_call(
+                retry_build_docs,
+                args=(repo, dest, pypi, retries_left),
+            )
+def retry_build_docs(*args):
+    """
+    Meant to be called from cron job. Should only push the rebuild job again to the main (default) queue
+    """
+    default_queue.enqueue_call(build_docs, args=args)
 
 def _temporary_checkout(repo, env, pypi):
     directory = os.path.join(tempfile.mkdtemp(), "src")
