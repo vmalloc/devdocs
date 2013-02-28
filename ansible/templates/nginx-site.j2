@@ -1,4 +1,7 @@
 server {
+    location ~ ^/sphinx/([^/]+)/(.*)$ {
+       alias {{docs_root}}/$1/sphinx/html/$2;
+    }
     location / {
        	 include uwsgi_params;
          uwsgi_pass unix:{{unix_socket_name}};
