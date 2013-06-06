@@ -2,9 +2,11 @@
 # -*- mode: python -*-
 from contextlib import contextmanager
 import glob
+import itertools
 import logging
 import os
 import re
+import stat
 import shutil
 import subprocess
 import tempfile
@@ -148,12 +150,25 @@ class Checkout(object):
 def _get_icon_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "docs_icon.png"))
 
+def _fix_permissions(directory):
+    _fix_permissions_single_file(directory)
+    for path, dirnames, filenames in os.walk(directory):
+        for name in itertools.chain(dirnames, filenames):
+            full_path = os.path.join(path, name)
+            _fix_permissions_single_file(full_path)
+def _fix_permissions_single_file(path):
+    mode = os.stat(path).st_mode | stat.S_IRGRP | stat.S_IROTH
+    if os.path.isdir(path):
+        mode |= stat.S_IXGRP | stat.S_IXOTH
+    os.chmod(path, mode)
+
 def _move_to_dest(src, dest):
     _logger.debug("move: %s --> %s", src, dest)
     deleted = dest + ".deleted"
     if os.path.exists(dest):
         os.rename(dest, deleted)
     os.rename(src, dest)
+    _fix_permissions(dest)
     if os.path.exists(deleted):
         shutil.rmtree(deleted)
 
