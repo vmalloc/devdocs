@@ -19,9 +19,13 @@
           <td><small>{{project.version}}</small></td>
           <td><a href="sphinx/{{project.package_name}}"><button class="btn">View Online</button></a></td>
           <td>
+            {% if project.has_dash %}
             <span style="background: #eeeeee; padding: 5px; border-radius: 2px">
 {{request.url_root}}dash/{{project.package_name}}.xml
             </span>
+            {% else %}
+            -
+            {% endif %}
           </td>
       </tr>
     {% endfor %}

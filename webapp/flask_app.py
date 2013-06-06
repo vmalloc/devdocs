@@ -2,14 +2,17 @@ import httplib
 from flask import (
     Flask,
     abort,
+    make_response,
     render_template,
     request,
     send_from_directory,
     url_for,
     )
+from werkzeug import secure_filename
 import os
+from tempfile import mkdtemp
 from urlobject import URLObject
-from builder import build_docs
+from builder import build_docs, unzip_docs
 from raven.contrib.flask import Sentry
 from sentry_dsn import SENTRY_DSN
 from rq_queues import default_queue
@@ -34,6 +37,20 @@ def build():
     default_queue.enqueue_call(
         build_docs,
         args=(request.values["url"], app.config["DOCS_ROOT"], request.values.get("pypi_url", None)))
+    return "Queued"
+
+@app.route("/upload/<package_name>/<version_name>", methods=["POST"])
+def upload(package_name, version_name):
+    if len(request.files) != 1:
+        return make_response(("File upload requires one file", httplib.BAD_REQUEST, {}))
+    [(_, uploaded_file)] = request.files.items()
+    filename = secure_filename(uploaded_file.filename)
+    directory = mkdtemp()
+    local_filename = os.path.join(directory, filename)
+    uploaded_file.save(local_filename)
+    default_queue.enqueue_call(
+        unzip_docs, args=(local_filename, app.config["DOCS_ROOT"], package_name, version_name)
+    )
     return "Queued"
 
 @app.route("/dash/<package_name>.xml")
@@ -65,11 +82,13 @@ def serve_sphinx(package_name, filename="index.html"):
 
 def get_projects():
     for project_name in os.listdir(app.config["DOCS_ROOT"]):
+        project_root = os.path.join(app.config["DOCS_ROOT"], project_name)
         project = {}
         for attr in ["package_name", "version"]:
-            with open(os.path.join(app.config["DOCS_ROOT"], project_name, "metadata", attr)) as attr_file:
+            with open(os.path.join(project_root, "metadata", attr)) as attr_file:
                 project[attr] = attr_file.read().strip()
+            project["has_dash"] = os.path.isdir(os.path.join(project_root, "dash"))
         yield project
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=8080)

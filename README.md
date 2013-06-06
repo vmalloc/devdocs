@@ -19,3 +19,7 @@ And then run ansible-playbook to deploy:
 To build a doc from a git repository, post the following:
 
 	curl http://my.deployment.server/build -F url=git://your.git.server/repo
+
+Alternatively you can upload a .tgz file containing your already-built HTML directory:
+
+    cutl http://my.deployment.server/upload/PROJET_NAME/PROJECT_VERSION -F file=@myfile.tgz
