@@ -5,7 +5,7 @@
     - name: setup group
       action: group name=$group_name state=present
     - name: setup user
-      action: user name=$user_name state=present group=$group_name
+      action: user name=$user_name state=present groups=$group_name,staff append=yes
     - name: set up packages
       action: apt pkg=$item state=latest
       with_items:
@@ -22,6 +22,8 @@
         - $deploy_root
         - $docs_root
       notify: fix permissions and ownerships
+    - name: make sure python libs are readable for staff group
+      shell: chgrp -R staff /usr/local/lib/python2.7 && chmod -R g+r /usr/local/lib/python2.7
     - name: nginx configuration
       action: template src=templates/nginx-site.j2 dest=/etc/nginx/sites-enabled/$app_name.conf
       notify: restart nginx
