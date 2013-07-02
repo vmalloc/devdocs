@@ -18,6 +18,6 @@
       action: template src=templates/supervisor.j2 dest=/etc/supervisor/conf.d/$app_name-wsgi.conf
       notify: reload supervisor
     - name: cron job for retries
-      action: cron name=retries minute=*/5 job="cd $deploy_root/webapp && ../virtualenv/bin/rqworker --burst retry"
+      action: cron name=retries user=$user_name minute=*/5 job="cd $deploy_root/webapp && ../virtualenv/bin/rqworker --burst retry"
   handlers:
     - include: handlers.yml

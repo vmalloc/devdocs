@@ -16,11 +16,6 @@
         - python-virtualenv
         - python-dev
         - libxslt1-dev # required for lxml
-    - name: global python packages to save time 
-      action: pip name=$item
-      with_items:
-        - doc2dash
-        - sphinx
     - name: ensure directories
       action: file state=directory path=$item owner=$user_name group=$group_name
       with_items:
