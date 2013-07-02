@@ -23,7 +23,7 @@
         - $docs_root
       notify: fix permissions and ownerships
     - name: make sure python libs are readable for staff group
-      shell: chgrp -R staff /usr/local/lib/python2.7 && chmod -R g+r /usr/local/lib/python2.7
+      shell: chgrp -R staff /usr/local/lib/python* && chmod g+r -R /usr/local/lib/python* && find /usr/local/lib/python* -type d -exec chmod g+x {} \;
     - name: nginx configuration
       action: template src=templates/nginx-site.j2 dest=/etc/nginx/sites-enabled/$app_name.conf
       notify: restart nginx
