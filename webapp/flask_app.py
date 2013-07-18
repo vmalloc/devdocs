@@ -1,4 +1,5 @@
 import httplib
+import itertools
 from flask import (
     Flask,
     abort,
@@ -15,12 +16,12 @@ from urlobject import URLObject
 from builder import build_docs, unzip_docs
 from raven.contrib.flask import Sentry
 from sentry_dsn import SENTRY_DSN
-from rq_queues import default_queue
+from rq_queues import default_queue, retry_queue, failed_queue
 
 # Tell RQ what Redis connection to use
 
 app = Flask(__name__)
-app.config["DOCS_ROOT"] = "/opt/devdocs/docs"
+app.config["DOCS_ROOT"] = "/tmp/devdocs/docs"
 app.config["DEBUG"] = True
 
 sentry = Sentry(app, dsn=SENTRY_DSN)
@@ -30,7 +31,7 @@ if not os.path.exists(app.config["DOCS_ROOT"]):
 
 @app.route("/")
 def index():
-    return render_template("index.html", projects=get_projects())
+    return render_template("index.html", projects=get_projects(), queue=get_queue())
 
 @app.route("/build", methods=["POST"])
 def build():
@@ -89,6 +90,13 @@ def get_projects():
                 project[attr] = attr_file.read().strip()
             project["has_dash"] = os.path.isdir(os.path.join(project_root, "dash"))
         yield project
+
+def get_queue():
+    return itertools.chain.from_iterable([
+        (itertools.izip(itertools.repeat(status), itertools.repeat(classes), queue.get_jobs()))
+        for status, classes, queue in [("Pending", ["pending"], default_queue),
+                                       ("Pending Retry", ["retry"], retry_queue),
+                                       ("Failed", ["failed"], failed_queue)]])
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080)

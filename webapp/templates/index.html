@@ -5,7 +5,7 @@
   <div class="well">
       <h1><img src="/static/img/logo.png" style="height: 2em">devdocs</h1>
   </div>
-  <div class="container">
+  <section id="projects">
     <table class="table">
       <tr>
         <th>Project</th>
@@ -30,6 +30,15 @@
       </tr>
     {% endfor %}
     </table>
-  </div>
+  </section>
+  <hr/>
+  <section id="queue">
+    <div class="container">
+      <strong>Queue</strong>
+    {% for status, classes, task in queue %}
+        <div class="task {{ classes | join(' ') }}">{{ task.args | join(', ') }}</div>
+    {% endfor %}
+    </div>
+  </section>
 </header>
 {% endblock %}

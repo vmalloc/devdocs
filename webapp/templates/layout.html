@@ -6,6 +6,35 @@
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
+
+      #queue > .container {
+        padding: 1em;
+        border: 1px dashed #ccc;
+      }
+
+      .task {
+        padding: 1em;
+        margin: 0.5em;
+        border-radius: 1em;
+      }
+
+      .task > .status {
+        color: #999;
+        border-radius: 0.5em;
+        display: inline-block;
+      }
+
+      .pending {
+        background: #cceecc;
+      }
+
+      .retry {
+        background: #ecb;
+      }
+
+      .failed {
+        background: #ffcccc;
+      }
     </style>
     <link rel="stylesheet" href="/static/css/bootstrap.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="/static/css/style.css" type="text/css" media="screen" />
