@@ -21,7 +21,7 @@ from rq_queues import default_queue, retry_queue, failed_queue
 # Tell RQ what Redis connection to use
 
 app = Flask(__name__)
-app.config["DOCS_ROOT"] = "/tmp/devdocs/docs"
+app.config["DOCS_ROOT"] = "/opt/devdocs/docs"
 app.config["DEBUG"] = True
 
 sentry = Sentry(app, dsn=SENTRY_DSN)
