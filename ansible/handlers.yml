@@ -21,6 +21,14 @@
   action: service name=supervisor state=started
 - name: restart nginx
   action: service name=nginx state=restarted
+- name: build wheels
+  shell: pip wheel --wheel-dir $deploy_root/wheels $item
+  with_items:
+    - Sphinx==1.1.3
+    - Jinja2
+    - doc2dash
+    - lxml
+
 
 
       

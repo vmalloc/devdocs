@@ -16,12 +16,22 @@
         - python-virtualenv
         - python-dev
         - libxslt1-dev # required for lxml
+    - name: latest pip, virtualenv, setuptools, wheel
+      pip: name=$item state=latest
+      with_items:
+        - pip
+        - virtualenv
+        - setuptools
+        - wheel
     - name: ensure directories
       action: file state=directory path=$item owner=$user_name group=$group_name
       with_items:
         - $deploy_root
         - $docs_root
-      notify: fix permissions and ownerships
+        - $deploy_root/wheels
+      notify: 
+        - fix permissions and ownerships
+        - build wheels
     - name: make sure python libs are readable for staff group
       shell: chgrp -R staff /usr/local/lib/python* && chmod g+r -R /usr/local/lib/python* && find /usr/local/lib/python* -type d -exec chmod g+x {} \;
     - name: nginx configuration

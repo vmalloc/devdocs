@@ -3,7 +3,7 @@
 from contextlib import contextmanager
 import glob
 import itertools
-import logging
+import logbook
 import os
 import re
 import stat
@@ -16,8 +16,7 @@ from sentry_dsn import SENTRY_DSN
 
 sentry = Client(SENTRY_DSN)
 
-_logger = logging.getLogger(__name__)
-
+_logger = logbook.Logger(__name__)
 
 def unzip_docs(filename, dest, package_name, version):
     directory = os.path.dirname(filename)
@@ -43,6 +42,7 @@ def build_docs(repo, dest, pypi=None, retries_left=5):
                 _move_to_dest(temp_dest, os.path.join(dest, temp_checkout.get_package_name()))
             return 0
     except:
+        _logger.error("Exception while building docs", exc_info=True)
         retries_left -= 1
         if retries_left <= 0:
             sentry.captureException()
@@ -65,10 +65,10 @@ def _temporary_checkout(repo, env, pypi):
 @contextmanager
 def _ensuring_virtualenv():
     virtualenv_path = "/tmp/virtualenvs/builder"
-    _execute_assert_success("virtualenv --distribute {}".format(virtualenv_path))
+    _execute_assert_success("virtualenv {}".format(virtualenv_path))
     try:
-        for package in ["doc2dash", "sphinx"]:
-            _execute_assert_success("{0}/bin/easy_install -U {1}".format(virtualenv_path, package))
+        for package in ["doc2dash", "Sphinx==1.1.3"]:
+            _execute_assert_success("{0}/bin/pip install --use-wheel --find-links /opt/devdocs/wheels {1}".format(virtualenv_path, package))
         yield virtualenv_path
     finally:
         shutil.rmtree(virtualenv_path)
@@ -98,12 +98,13 @@ class Checkout(object):
         self._version = _execute_assert_success(
             "git describe --tags",
             cwd=self._path, stdout=subprocess.PIPE).stdout.read().strip()
-        logging.info("Processing %s (version %s)", self._package_name, self._version)
+        _logger.info("Processing %s (version %s)", self._package_name, self._version)
 
     def _install(self, pypi):
-        command = "python setup.py develop"
+        command = "pip install --use-wheel --find-links /opt/devdocs/wheels"
         if pypi:
             command += " -i {0}".format(pypi)
+        command += " -e {0}".format(self._path)
         _execute_in_venv(self._venv, command, cwd=self._path)
 
     def __enter__(self):
@@ -120,17 +121,21 @@ class Checkout(object):
         )
 
     def generate_dash(self, dest_dir):
-        temp_sphinx_dir = os.path.join(tempfile.mkdtemp(), "sphinx")
-        with self._patched_repository_context():
-            self.generate_sphinx(temp_sphinx_dir)
-            _execute_in_venv(self._venv, "doc2dash {temp_sphinx_dir}/html -i {icon} -n {self._package_name} --destination {dest}/".format(
+        temp_path = tempfile.mkdtemp()
+        try:
+            temp_sphinx_dir = os.path.join(tempfile.mkdtemp(), "sphinx")
+            with self._patched_repository_context():
+                self.generate_sphinx(temp_sphinx_dir)
+                _execute_in_venv(self._venv, "doc2dash {temp_sphinx_dir}/html -i {icon} -n {self._package_name} --destination {dest}/".format(
                     icon=_get_icon_path(),
                     self=self,
                     temp_sphinx_dir=temp_sphinx_dir,
                     dest=dest_dir,
                     ))
-        _execute_assert_success("tar -czvf {0}.tgz {0}.docset".format(self._package_name), cwd=dest_dir)
-        shutil.rmtree(os.path.join(dest_dir, "{0}.docset".format(self._package_name)))
+            _execute_assert_success("tar -czvf {0}.tgz {0}.docset".format(self._package_name), cwd=dest_dir)
+            shutil.rmtree(os.path.join(dest_dir, "{0}.docset".format(self._package_name)))
+        finally:
+            shutil.rmtree(temp_path)
 
     @contextmanager
     def _patched_repository_context(self):
@@ -171,7 +176,7 @@ def _fix_permissions_single_file(path):
     os.chmod(path, mode)
 
 def _move_to_dest(src, dest):
-    _logger.debug("move: %s --> %s", src, dest)
+    _logger.debug("move: {} --> {}", src, dest)
     deleted = dest + ".deleted"
     if os.path.exists(dest):
         os.rename(dest, deleted)
@@ -181,11 +186,11 @@ def _move_to_dest(src, dest):
         shutil.rmtree(deleted)
 
 def _execute_assert_success(cmd, *args, **kwargs):
-    _logger.debug("exec: %s", cmd)
-    p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE,
+    _logger.debug("exec: {}", cmd)
+    p = subprocess.Popen(cmd, shell=True,
                          *args, **kwargs)
     if 0 != p.wait():
-        raise ExecutionError("Command failed: cmd: {!r} stderr:\n{}".format(cmd, p.stderr.read()))
+        raise ExecutionError("Command failed: cmd: {!r}".format(cmd))
     return p
 
 def _execute_in_venv(venv, cmd, *args, **kwargs):
