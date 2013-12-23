@@ -3,6 +3,7 @@ flask==0.9
 raven
 redis
 rq>=0.3.8
+rq-dashboard
 urlobject
 Logbook
 wheel

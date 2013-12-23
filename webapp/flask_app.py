@@ -16,6 +16,7 @@ from urlobject import URLObject
 from builder import build_docs, unzip_docs
 from raven.contrib.flask import Sentry
 from sentry_dsn import SENTRY_DSN
+from rq_dashboard import RQDashboard
 from rq_queues import default_queue, retry_queue, failed_queue
 
 # Tell RQ what Redis connection to use
@@ -23,6 +24,8 @@ from rq_queues import default_queue, retry_queue, failed_queue
 app = Flask(__name__)
 app.config["DOCS_ROOT"] = "/opt/devdocs/docs"
 app.config["DEBUG"] = True
+
+RQDashboard(app)
 
 sentry = Sentry(app, dsn=SENTRY_DSN)
 
