@@ -6,14 +6,14 @@ Deployment requires [Ansible](http://ansible.cc/ ) to be installed.
 
 To test via vagrant, just run `vagrant up`. The webserver will be available via http://127.0.0.1:8080. You will need 
 
-To install to a server, create an inventory file (for instance, in `./inventory`), which looks like the following:
+To install to a server, modify the `ansible/inventory` file to look like this:
 
 	[webservers]
 	my.deployment.server
 	
-And then run ansible-playbook to deploy:
+And then run
 
-	ansible-playbook -u root  -i ./inventory ./ansible/deploy.yml
+	make deploy
 
 # Usage
 To build a doc from a git repository, post the following:
