@@ -1,7 +1,6 @@
 ---
 # TODO: 
 #   user/group
-- include: local.yml
 - include: base_system.yml
 - hosts: webservers
   vars_files:

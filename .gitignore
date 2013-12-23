@@ -32,3 +32,4 @@ pip-log.txt
 .vagrant
 __webapp.tar
 .DS_Store
+.env

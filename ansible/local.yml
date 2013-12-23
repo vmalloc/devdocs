@@ -1,7 +1,0 @@
-- hosts: all
-  sudo: no
-  tasks:
-    - name: update local tar file
-      shell: python build_tar.py
-      delegate_to: 127.0.0.1
-
