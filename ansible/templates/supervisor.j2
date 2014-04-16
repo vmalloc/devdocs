@@ -1,18 +1,18 @@
 [program:{{app_name}}-wsgi]
-command={{deploy_root}}/virtualenv/bin/uwsgi --uid $user_name --pythonpath={{deploy_root}}/webapp -b 16384 --chmod-socket=666 --home {{deploy_root}}/virtualenv --file {{deploy_root}}/webapp/flask_app.py --callable app -s {{unix_socket_name}}
+command={{deploy_root}}/virtualenv/bin/uwsgi --uid {{user_name}} --pythonpath={{deploy_root}}/webapp -b 16384 --chmod-socket=666 --home {{deploy_root}}/virtualenv --file {{deploy_root}}/webapp/flask_app.py --callable app -s {{unix_socket_name}}
 redirect_stderr=true
 stdout_logfile=/var/log/{{app_name}}-wsgi.log
 stdout_logfile_maxbytes=50MB
 stdout_logfile_backups=3
-user=$user_name
+user={{user_name}}
 
 [program:{{app_name}}-rq]
 command={{deploy_root}}/virtualenv/bin/rqworker -vvv
-environment=HOME='/home/$user_name',USER='$user_name'
+environment=HOME='/home/{{user_name}}',USER='{{user_name}}'
 directory={{deploy_root}}/webapp
 redirect_stderr=true
 stdout_logfile=/var/log/{{app_name}}-rq.log
 stdout_logfile_maxbytes=50MB
 stdout_logfile_backups=3
-user=$user_name
+user={{user_name}}
 

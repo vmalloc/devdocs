@@ -1,19 +1,19 @@
 - name: untar sources
-  shell: cd $deploy_root && rm -rf webapp && tar xf $webapp_archive_location 2>&1 > /tmp/untar.log
+  shell: cd {{deploy_root}} && rm -rf webapp && tar xf {{webapp_archive_location}} 2>&1 > /tmp/untar.log
   notify: 
     - fix permissions and ownerships
     - update virtualenv requirements
     - reload supervisor
 - name: update virtualenv requirements
-  action: pip requirements=$deploy_root/webapp/pip_requirements.txt virtualenv=$deploy_root/virtualenv
+  action: pip requirements="{{deploy_root}}/webapp/pip_requirements.txt" virtualenv="{{deploy_root}}/virtualenv"
   notify:
     - fix permissions and ownerships
     - reload supervisor
 - name: fix permissions and ownerships
-  shell: chown -R $user_name:$group_name $item
+  shell: chown -R {{user_name}}:{{group_name}} {{item}}
   with_items:
-    - $deploy_root
-    - $docs_root
+    - "{{deploy_root}}"
+    - "{{docs_root}}"
 - name: reload supervisor
   shell: supervisorctl reload
   notify: ensure supervisor service
@@ -22,7 +22,7 @@
 - name: restart nginx
   action: service name=nginx state=restarted
 - name: build wheels
-  shell: pip wheel --wheel-dir $deploy_root/wheels $item
+  shell: "pip wheel --wheel-dir {{deploy_root}}/wheels {{item}}"
   with_items:
     - Sphinx==1.1.3
     - Jinja2
