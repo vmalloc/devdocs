@@ -85,7 +85,7 @@ def serve_sphinx(package_name, filename="index.html"):
     )
 
 def get_projects():
-    for project_name in os.listdir(app.config["DOCS_ROOT"]):
+    for project_name in sorted(os.listdir(app.config["DOCS_ROOT"]), key=str.lower):
         project_root = os.path.join(app.config["DOCS_ROOT"], project_name)
         project = {}
         for attr in ["package_name", "version"]:
