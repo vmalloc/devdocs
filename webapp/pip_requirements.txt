@@ -1,5 +1,5 @@
 blinker
-flask==0.9
+flask==1.0
 raven
 redis
 rq>=0.3.8
